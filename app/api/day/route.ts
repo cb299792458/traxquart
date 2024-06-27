@@ -1,21 +1,26 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import { db } from '@vercel/postgres'
 
 const client = await db.connect();
 
 export async function GET(
-    req: NextApiRequest,
+
 ) {
     return Response.json({ msg: "Hello World"});
 }
 
 
-export const POST = async (req: NextApiRequest) => {
-    const day = req.body
+export const POST = async (req: any) => {
+
+    const day = await req.json()
     await client.sql`BEGIN`
 
-    
+    const insertedDay = await client.sql`
+      INSERT INTO days (date, recommended, consumed)
+      VALUES (${day.date}, ${day.recommended}, ${day.consumed})
+      RETURNING *;
+    `
 
     await client.sql`COMMIT`
-    return Response.json({ message: 'Seed successful' })
+
+    return Response.json({ message: 'Seed successful', insertedDay })
 }
