@@ -1,6 +1,6 @@
 'use client';
 import { useState } from "react";
-import axios from "axios";
+import { signIn } from '@/auth';
 
 export default function Page() {
     const [email, setEmail] = useState('');
@@ -9,9 +9,7 @@ export default function Page() {
     const handleSubmit = async (e: any) => {
         e.preventDefault();
         try {
-
-            const response = await axios.post('/api/login', { email, password });
-            console.log(response.data);
+            await signIn('credentials', { email, password })
         } catch (error) {
             console.error(error);
         }

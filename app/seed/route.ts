@@ -6,16 +6,19 @@ const client = await db.connect();
 type User = {
     email: string
     password: string
+    weight: number
 }
 
 const users: User[] = [
     {
         email: 'demo@user.com',
         password: 'password',
+        weight: 150,
     },
     {
         email: 'brianrlam@gmail.com',
-        password: 'password',
+        password: 'asdfasdf',
+        weight: 200,
     },
 ]
 
@@ -25,7 +28,8 @@ const seedUsers = async () => {
         CREATE TABLE IF NOT EXISTS users (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
             email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            weight INT NOT NULL
         );
     `
 
@@ -35,8 +39,8 @@ const seedUsers = async () => {
         users.map(async (user) => {
             const hashedPassword = await bcrypt.hash(user.password, 10)
             return client.sql`
-                INSERT INTO users (email, password)
-                VALUES (${user.email}, ${hashedPassword})
+                INSERT INTO users (email, password, weight)
+                VALUES (${user.email}, ${hashedPassword}, ${user.weight})
                 RETURNING *;
             `
         })
@@ -53,13 +57,13 @@ type Day = {
 
 const days: Day[] = [
     {
-        date: (new Date('2024-06-26')).toDateString(),
-        recommended: 2000,
-        consumed: 1500,
+        date: (new Date()).toDateString(),
+        recommended: 75,
+        consumed: 60,
     },
     {
-        date: (new Date('2024-06-27')).toDateString(),
-        recommended: 2000,
+        date: (new Date()).toDateString(),
+        recommended: 100,
         consumed: 0,
     },
 ]
@@ -70,7 +74,7 @@ const seedDays = async () => {
     await client.sql`
         CREATE TABLE IF NOT EXISTS days (
             id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-            date TEXT UNIQUE NOT NULL,
+            date TEXT NOT NULL,
             recommended INT NOT NULL,
             consumed INT NOT NULL
         );
@@ -91,9 +95,15 @@ const seedDays = async () => {
     return insertedDays;
 }
 
+const dropTables = async () => {
+    await client.sql`DROP TABLE IF EXISTS users`
+    await client.sql`DROP TABLE IF EXISTS days`
+}
+
 export async function GET() {
     try {
         await client.sql`BEGIN`
+        await dropTables()
         await seedUsers()
         await seedDays()
         await client.sql`COMMIT`
